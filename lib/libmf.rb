@@ -11,8 +11,6 @@ module Libmf
   class << self
     attr_accessor :ffi_lib
   end
-  self.ffi_lib = ["mf"]
-
   lib_path =
     if ::FFI::Platform.windows?
       "../vendor/libmf/windows/mf.dll"
@@ -21,7 +19,7 @@ module Libmf
     else
       "libmf.so"
     end
-  self.ffi_lib << File.expand_path(lib_path, __dir__)
+  self.ffi_lib = [File.expand_path(lib_path, __dir__)]
 
   # friendlier error message
   autoload :FFI, "libmf/ffi"
