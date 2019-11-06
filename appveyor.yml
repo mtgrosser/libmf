@@ -16,6 +16,7 @@ before_test:
 build_script:
   - git submodule update --init --recursive
   - bundle exec ruby ext/libmf/extconf.rb
+  - dumpbin /exports vendor/libmf/windows/mf.dll
 
 test_script:
   - bundle exec rake test
