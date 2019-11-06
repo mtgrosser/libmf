@@ -17,7 +17,7 @@ build_script:
   - git submodule update --init --recursive
   - bundle exec ruby ext/libmf/extconf.rb
   - set "DUMPBIN=%VS140COMNTOOLS%\..\..\VC\bin\dumpbin.exe"
-  - '"%DUMPBIN%" /exports vendor/libmf/windows/mf.dll
+  - "%DUMPBIN%" /exports vendor/libmf/windows/mf.dll
 
 test_script:
   - bundle exec rake test
