@@ -15,7 +15,7 @@ module Libmf
 
   lib_path =
     if ::FFI::Platform.windows?
-      "../vendor/windows/mf.dll"
+      "../vendor/libmf/windows/mf.dll"
     elsif ::FFI::Platform.mac?
       "libmf.bundle"
     else
