@@ -13,5 +13,9 @@ before_test:
   - gem -v
   - bundle -v
 
+build_script:
+  - git submodule update --init --recursive
+  - bundle exec ruby ext/xgb/extconf.rb
+
 test_script:
   - bundle exec rake test
