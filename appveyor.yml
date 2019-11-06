@@ -12,7 +12,6 @@ before_test:
   - ruby -v
   - gem -v
   - bundle -v
-  - bundle exec rake compile
 
 test_script:
   - bundle exec rake test
