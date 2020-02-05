@@ -16,9 +16,8 @@ before_test:
 build_script:
   - git submodule update --init --recursive
   - bundle exec ruby ext/libmf/extconf.rb
-  - wget https://github.com/ankane/ml-builds/releases/download/libmf-v201/mf.dll
   - rm vendor/libmf/windows/mf.dll
-  - mv mf.dll vendor/libmf/windows/mf.dll
+  - Invoke-WebRequest https://github.com/ankane/ml-builds/releases/download/libmf-v201/mf.dll -OutFile vendor/libmf/windows/mf.dll
 
 test_script:
   - bundle exec rake test
