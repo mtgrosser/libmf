@@ -5,7 +5,7 @@ module Libmf
     begin
       ffi_lib Libmf.ffi_lib
     rescue LoadError => e
-      raise e if ENV["LIBMF_DEBUG"]
+      raise e #if ENV["LIBMF_DEBUG"]
       raise LoadError, "Could not find LIBMF"
     end
 
