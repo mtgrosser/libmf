@@ -17,7 +17,7 @@ build_script:
   - git submodule update --init --recursive
   - bundle exec ruby ext/libmf/extconf.rb
   - rm vendor/libmf/windows/mf.dll
-  - curl -o vendor/libmf/windows/mf.dll https://github.com/ankane/ml-builds/releases/download/libmf-v201/mf.dll
+  # - curl -o vendor/libmf/windows/mf.dll https://github.com/ankane/ml-builds/releases/download/libmf-v201/mf.dll
   - ls vendor/libmf/windows
 
 test_script:
