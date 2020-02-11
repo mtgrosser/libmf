@@ -76,7 +76,7 @@ class LibmfTest < Minitest::Test
 
   def read_file(filename)
     data = []
-    File.foreach("vendor/libmf/demo/#{filename}") do |line|
+    File.foreach("vendor/#{filename}") do |line|
       row = line.chomp.split(" ")
       data << [row[0].to_i, row[1].to_i, row[2].to_f]
     end

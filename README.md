@@ -143,9 +143,9 @@ Everyone is encouraged to help improve this project. Here are a few ways you can
 To get started with development:
 
 ```sh
-git clone --recursive https://github.com/ankane/libmf.git
+git clone https://github.com/ankane/libmf.git
 cd libmf
 bundle install
-bundle exec rake compile
+bundle exec rake vendor:all
 bundle exec rake test
 ```
