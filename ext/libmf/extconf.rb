@@ -1,7 +1,7 @@
 require 'mkmf'
 require 'rbconfig'
-require 'libmf/builder'
+#require 'libmf/builder'
 
-Libmf::Builder.make
+#Libmf::Builder.make
 
 create_makefile 'libmf/libmf'
