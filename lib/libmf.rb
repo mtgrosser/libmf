@@ -19,7 +19,7 @@ module Libmf
     else
       "libmf.so"
     end
-  vendor_lib = File.expand_path("../vendor/#{lib_name}", __dir__)
+  vendor_lib = File.expand_path("libmf/#{lib_name}", __dir__)
   self.ffi_lib = [vendor_lib]
 
   # friendlier error message

@@ -1,0 +1,2 @@
+import 'compile.rake'
+task default: :compile
