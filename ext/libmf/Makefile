@@ -26,8 +26,11 @@ else
 	SO_NAME = -soname
 endif
 
-all:
+noall:
 	ruby make.rb
+
+all:
+	true
 	
 install:
 	true
