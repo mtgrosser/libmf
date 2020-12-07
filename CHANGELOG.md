@@ -1,3 +1,7 @@
+## 0.2.1 (2020-12-07)
+
+- Compile libmf library locally
+
 ## 0.2.0 (2020-03-26)
 
 - Changed to BSD 3-Clause license to match LIBMF
