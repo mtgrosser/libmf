@@ -26,6 +26,12 @@ else
 	SO_NAME = -soname
 endif
 
+all:
+	ruby make.rb
+	
+install:
+	true
+
 lib: mf.o
 	$(CXX) -shared -Wl,$(SO_NAME),libmf.$(LIB_EXT) -o libmf.$(LIB_EXT) mf.o
 
