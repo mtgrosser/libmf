@@ -1,29 +1,16 @@
 require 'tempfile'
 require 'pathname'
+require 'shellwords'
 require 'rbconfig'
 
-def make_darwin(srcdir, tmpdir, libdir)
-  build = tmpdir.join('libmf.2.dylib')
-  target = libdir.join('libmf.dylib')
+def make_unix(srcdir, tmpdir, libdir, build_name, target_name)
+  build = tmpdir.join(build_name)
+  target = libdir.join(target_name)
   tmpdir.join('Makefile').write(srcdir.join('Makefile').read)
-  Dir.chdir(tmpdir) do
-    system('make lib DFLAG="" OMPFLAG=""')
-    raise 'Compilation error!' unless build.exist?
-    target.binwrite(build.binread)
-    target.chmod(0755)
-  end
-end
-
-def make_linux
-  build = tmpdir.join('libmf.so.2')
-  target = libdir.join('libmf.so')
-  tmpdir.join('Makefile').write(srcdir.join('Makefile').read)
-  Dir.chdir(tmpdir) do
-    system('make lib DFLAG="" OMPFLAG=""')
-    raise 'Compilation error!' unless build.exist?
-    target.binwrite(build.binread)
-    target.chmod(0755)
-  end
+  system(%{make -C #{Shellwords.escape(tmpdir)} lib DFLAG="" OMPFLAG=""})
+  raise 'Compilation error!' unless build.exist?
+  target.binwrite(build.binread)
+  target.chmod(0755)
 end
 
 desc 'Compile the libmf library'
@@ -39,9 +26,9 @@ task :compile do
     if Gem.win_platform?
       raise 'Compilation currently not supported on Windows'
     elsif RbConfig::CONFIG['host_os'] =~ /darwin/i
-      make_darwin(srcdir, tmpdir, libdir)
+      make_unix(srcdir, tmpdir, libdir, 'libmf.2.dylib', 'libmf.dylib')
     else
-      make_linux(srcdir, tmpdir, libdir)
+      make_unix(srcdir, tmpdir, libdir, 'libmf.so.2', 'libmf.so')
     end
   end
 end
