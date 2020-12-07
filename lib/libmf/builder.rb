@@ -6,8 +6,9 @@ require 'rbconfig'
 module Libmf
   module Builder
     class << self
-      SRCDIR = Pathname.new(__dir__)
-      LIBDIR = Pathname.new(__dir__).parent.parent.join('lib', 'libmf')
+      ROOT = Pathname.new(__dir__).parent.parent
+      SRCDIR = ROOT.join('ext', 'libmf', 'src')
+      LIBDIR = ROOT.join('lib', 'libmf')
       
       def make
         if Gem.win_platform?

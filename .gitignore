@@ -12,3 +12,4 @@
 *.dylib
 *.dll
 *.gem
+*.bundle

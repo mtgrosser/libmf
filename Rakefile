@@ -1,8 +1,6 @@
 require "bundler/gem_tasks"
 require "rake/testtask"
 
-require_relative 'ext/libmf/builder'
-
 task default: :test
 Rake::TestTask.new do |t|
   t.libs << "test"
@@ -10,8 +8,10 @@ Rake::TestTask.new do |t|
   t.warning = false
 end
 
-task :compile do
-  Libmf::Builder.make
+require 'rake/extensiontask'
+
+Rake::ExtensionTask.new('libmf') do |ext|
+  ext.lib_dir = 'lib/libmf'
 end
 
 task :benchmark do
