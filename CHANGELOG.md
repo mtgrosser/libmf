@@ -1,4 +1,8 @@
-## 0.2.1 (2020-12-07)
+## 0.2.2 (unreleased)
+
+- Reduced allocations
+
+## 0.2.1 (2020-12-28)
 
 - Compile libmf library locally
 
