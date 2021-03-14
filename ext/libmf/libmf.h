@@ -1,5 +1,5 @@
-#ifndef RUBY_RSZR_H
-#define RUBY_RSZR_H
+#ifndef RUBY_LIBMF_H
+#define RUBY_LIBMF_H
 
 #include "ruby.h"
 
