@@ -12,10 +12,9 @@ Gem::Specification.new do |spec|
 
   spec.files         = Dir["*.{md,txt}", "{lib,ext}/**/*"]
   spec.require_paths = %w[lib ext]
-  spec.extensions    = %w[ext/libmf/extconf.rb]
+  spec.extensions    = %w[ext/libmf/Rakefile]
 
   spec.required_ruby_version = ">= 2.4"
 
   spec.add_dependency "ffi"
-  spec.add_dependency "rake"
 end

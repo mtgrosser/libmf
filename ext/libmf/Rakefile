@@ -1,0 +1,11 @@
+require 'mkmf'
+require 'rbconfig'
+
+require_relative 'builder'
+
+desc 'Compile the libmf shared binary'
+task :compile do
+  Libmf::Builder.make
+end
+
+task default: :compile

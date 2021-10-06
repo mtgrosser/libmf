@@ -1,15 +1,12 @@
 require "bundler/gem_tasks"
 require "rake/testtask"
-require "rake/extensiontask"
+
+import 'ext/libmf/Rakefile'
 
 task default: :test
 Rake::TestTask.new do |t|
   t.libs << "test"
   t.pattern = "test/**/*_test.rb"
-end
-
-Rake::ExtensionTask.new('libmf') do |ext|
-  ext.lib_dir = 'lib/libmf'
 end
 
 def download_file(file, sha256)
