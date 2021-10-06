@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.license       = "BSD-3-Clause"
 
   spec.author        = "Andrew Kane"
-  spec.email         = "andrew@chartkick.com"
+  spec.email         = "andrew@ankane.org"
 
   spec.files         = Dir["*.{md,txt}", "{lib,ext}/**/*"]
   spec.require_paths = %w[lib ext]
@@ -18,10 +18,4 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "ffi"
   spec.add_dependency "rake"
-
-  spec.add_development_dependency "bundler"
-  spec.add_development_dependency 'rake-compiler'
-  spec.add_development_dependency "minitest", ">= 5"
-  spec.add_development_dependency "benchmark-ips"
-  spec.add_development_dependency "numo-narray"
 end

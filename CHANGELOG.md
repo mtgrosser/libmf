@@ -1,10 +1,23 @@
-## 0.2.2 (unreleased)
+## 0.2.5 (2021-10-06)
+
+- Compile libmf library locally
+
+## 0.2.4 (2021-08-05)
+
+- Fixed memory leak
+
+## 0.2.3 (2021-03-14)
+
+- Added ARM shared library for Linux
+
+## 0.2.2 (2021-02-04)
 
 - Reduced allocations
+- Improved ARM detection
 
 ## 0.2.1 (2020-12-28)
 
-- Compile libmf library locally
+- Added ARM shared library for Mac
 
 ## 0.2.0 (2020-03-26)
 
