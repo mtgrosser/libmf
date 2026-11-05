@@ -363,7 +363,7 @@ void Block::tie_to(mf_node *first_, mf_node *last_)
 {
     first = first_;
     last = last_;
-};
+}
 
 class BlockOnDisk : public BlockBase
 {
@@ -682,7 +682,7 @@ mf_double Utility::calc_error(
 #if defined USEOMP
 #pragma omp parallel for num_threads(nr_threads) schedule(static) reduction(+:error)
 #endif
-        for(mf_int i = 0; i < (mf_long)cv_block_ids.size(); ++i)
+        for(mf_long i = 0; i < (mf_long)cv_block_ids.size(); ++i)
         {
             BlockBase *block = blocks[cv_block_ids[i]];
             block->reload();
@@ -733,7 +733,7 @@ mf_double Utility::calc_error(
 #if defined USEOMP
 #pragma omp parallel for num_threads(nr_threads) schedule(static) reduction(+:error)
 #endif
-                for(mf_int i = 0; i < (mf_long)cv_block_ids.size(); ++i)
+                for(mf_long i = 0; i < (mf_long)cv_block_ids.size(); ++i)
                 {
                     BlockBase *block = blocks[cv_block_ids[i]];
                     block->reload();
@@ -754,7 +754,7 @@ mf_double Utility::calc_error(
 #if defined USEOMP
 #pragma omp parallel for num_threads(nr_threads) schedule(static) reduction(+:error)
 #endif
-                for(mf_int i = 0; i < (mf_long)cv_block_ids.size(); ++i)
+                for(mf_long i = 0; i < (mf_long)cv_block_ids.size(); ++i)
                 {
                     BlockBase *block = blocks[cv_block_ids[i]];
                     block->reload();
@@ -891,7 +891,7 @@ vector<mf_node*> Utility::grid_problem(
             sort(ptrs[block], ptrs[block+1], sort_node_by_q());
     }
 
-    for(mf_int i = 0; i < (mf_long)blocks.size(); ++i)
+    for(mf_long i = 0; i < (mf_long)blocks.size(); ++i)
         blocks[i].tie_to(ptrs[i], ptrs[i+1]);
 
     return ptrs;
@@ -969,14 +969,15 @@ void Utility::grid_shuffle_scale_problem_on_disk(
         buffer.read((char*)nodes.data(), sizeof(mf_node)*nodes.size());
     }
 
-    for(mf_int i = 0; i < (mf_long)blocks.size(); ++i)
+    for(mf_long i = 0; i < (mf_long)blocks.size(); ++i)
         blocks[i].tie_to(buffer_path, counts[i], counts[i+1]);
 }
 
 mf_float* Utility::malloc_aligned_float(mf_long size)
 {
     // Check if conversion from mf_long to size_t causes overflow.
-    if (size > numeric_limits<std::size_t>::max() / sizeof(mf_float) + 1)
+    if (size >= 0 && sizeof(unsigned long) >= sizeof(mf_long) &&
+        (unsigned long)size > numeric_limits<std::size_t>::max() / sizeof(mf_float) + 1)
         throw bad_alloc();
     // [REVIEW] I hope one day we can use C11 aligned_alloc to replace
     // platform-depedent functions below. Both of Windows and OSX currently
@@ -1114,18 +1115,18 @@ mf_model* Utility::init_model(mf_int m, mf_int n, mf_int k)
 
 vector<mf_int> Utility::gen_random_map(mf_int size)
 {
-    srand(0);
+    default_random_engine generator;
     vector<mf_int> map(size, 0);
     for(mf_int i = 0; i < size; ++i)
         map[i] = i;
-    random_shuffle(map.begin(), map.end());
+    shuffle(map.begin(), map.end(), generator);
     return map;
 }
 
 vector<mf_int> Utility::gen_inv_map(vector<mf_int> &map)
 {
     vector<mf_int> inv_map(map.size());
-    for(mf_int i = 0; i < (mf_long)map.size(); ++i)
+    for(mf_int i = 0; i < (mf_int)map.size(); ++i)
       inv_map[map[i]] = i;
     return inv_map;
 }
@@ -3127,7 +3128,7 @@ try
                 tr->m, tr->n, param.k, avg/scale, omega_p, omega_q),
                 [] (mf_model *ptr) { mf_destroy_model(&ptr); });
 
-    for(mf_int i = 0; i < (mf_long)blocks.size(); ++i)
+    for(mf_long i = 0; i < (mf_long)blocks.size(); ++i)
         block_ptrs[i] = &blocks[i];
 
     fpsg_core(util, sched, tr.get(), va.get(), param, scale,
@@ -3204,7 +3205,7 @@ try
                 tr.m, tr.n, param.k, avg/scale, omega_p, omega_q),
                 [] (mf_model *ptr) { mf_destroy_model(&ptr); });
 
-    for(mf_int i = 0; i < (mf_long)blocks.size(); ++i)
+    for(mf_long i = 0; i < (mf_long)blocks.size(); ++i)
         block_ptrs[i] = &blocks[i];
 
     fpsg_core(util, sched, &tr, &va, param, scale,
@@ -3869,7 +3870,7 @@ try
         // The original data is reused as row-major one so
         // one duplicate for column-major one would be created.
         tr_csr = shared_ptr<mf_problem>(Utility::copy_problem(tr_, false));
-        tr_csc = shared_ptr<mf_problem>(Utility::copy_problem(tr_, true));
+        tr_csc = shared_ptr<mf_problem>(Utility::copy_problem(tr_, true), deleter());
         va = shared_ptr<mf_problem>(Utility::copy_problem(va_, false));
     }
 
@@ -4025,12 +4026,6 @@ bool check_parameter(mf_parameter param)
              << "process (4*nr_threads^2+1 blocks is suggested)" << endl;
     }
 
-    if(param.nr_bins <= 2*param.nr_threads)
-    {
-        cerr << "Warning: insufficient blocks may slow down the training"
-             << "process (4*nr_threads^2+1 blocks is suggested)" << endl;
-    }
-
     if(param.alpha < 0)
     {
         cerr << "alpha must be a non-negative number" << endl;
@@ -4070,10 +4065,10 @@ CrossValidatorBase::CrossValidatorBase(mf_parameter param_, mf_int nr_folds_)
 mf_double CrossValidatorBase::do_cross_validation()
 {
     vector<mf_int> cv_blocks;
-    srand(0);
+    default_random_engine generator;
     for(mf_int block = 0; block < nr_bins*nr_bins; ++block)
         cv_blocks.push_back(block);
-    random_shuffle(cv_blocks.begin(), cv_blocks.end());
+    shuffle(cv_blocks.begin(), cv_blocks.end(), generator);
 
     if(!quiet)
     {
@@ -4265,11 +4260,6 @@ mf_double mf_cross_validation_on_disk(
     CrossValidatorOnDisk validator(param, nr_folds, string(prob));
 
     return validator.do_cross_validation();
-}
-
-mf_problem mf_read_problem(char const *path)
-{
-    return read_problem(path);
 }
 
 mf_problem read_problem(string path)
@@ -4563,7 +4553,7 @@ pair<mf_double, mf_double> calc_mpr_auc(mf_problem *prob,
         pair<mf_node, mf_float> const &rhs) { return lhs.second < rhs.second; };
 
     vector<mf_int> pos_cnts(m+1, 0);
-    for(mf_int i = 0; i < prob->nnz; ++i)
+    for(mf_long i = 0; i < prob->nnz; ++i)
         pos_cnts[prob->R[i].*row_ptr+1] += 1;
     for(mf_int i = 1; i < m+1; ++i)
         pos_cnts[i] += pos_cnts[i-1];

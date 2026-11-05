@@ -4,7 +4,7 @@ Gem::Specification.new do |spec|
   spec.name          = "libmf"
   spec.version       = Libmf::VERSION
   spec.summary       = "Large-scale sparse matrix factorization for Ruby"
-  spec.homepage      = "https://github.com/ankane/libmf"
+  spec.homepage      = "https://github.com/ankane/libmf-ruby"
   spec.license       = "BSD-3-Clause"
 
   spec.author        = "Andrew Kane"
@@ -13,9 +13,11 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["*.{md,txt}", "{lib,ext}/**/*"]
   spec.require_paths = %w[lib ext]
   spec.extensions    = %w[ext/libmf/Rakefile]
+  
+  spec.require_path  = "lib"
 
-  spec.required_ruby_version = ">= 2.4"
+  spec.required_ruby_version = ">= 3.3"
 
   spec.add_dependency "ffi"
-  spec.add_dependency "ostruct"
+#  spec.add_dependency "ostruct"
 end

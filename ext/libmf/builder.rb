@@ -9,7 +9,7 @@ module Libmf
       ROOT = Pathname.new(__dir__).parent.parent
       SRCDIR = ROOT.join('ext', 'libmf', 'src')
       LIBDIR = ROOT.join('lib', 'libmf')
-      
+
       def make
         if Gem.win_platform?
           make_win
@@ -19,19 +19,19 @@ module Libmf
           make_linux
         end
       end
-      
+
       def make_win
         raise 'Compilation currently not supported on Windows'
       end
-      
+
       def make_darwin
         make_unix('libmf.2.dylib', 'libmf.dylib')
       end
-      
+
       def make_linux
         make_unix('libmf.so.2', 'libmf.so')
       end
-      
+
       private
 
       def in_build_dir

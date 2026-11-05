@@ -18,8 +18,8 @@ class ModelTest < Minitest::Test
 
     pred = model.predict(1, 1)
     tempfile = Tempfile.new("libmf")
-    model.save_model(tempfile.path)
-    model.load_model(tempfile.path)
+    model.save(tempfile.path)
+    model = Libmf::Model.load(tempfile.path)
     assert_equal pred, model.predict(1, 1)
 
     lines = File.readlines(tempfile.path)
@@ -48,24 +48,107 @@ class ModelTest < Minitest::Test
 
     model = Libmf::Model.new(quiet: true)
     model.fit(train_set, eval_set: eval_set)
+    assert model.rmse(eval_set)
+  end
+
+  def test_eval_set_extra
+    train_set = read_file("real_matrix.tr.txt")
+
+    model = Libmf::Model.new(quiet: true)
+    model.fit(train_set, eval_set: [[1000000, 1000000, 1]])
+    assert_equal 2309, model.rows
+    assert_equal 1368, model.columns
+  end
+
+  def test_eval_set_extra_rows_one_class_l2
+    train_set = read_file("real_matrix.tr.txt")
+
+    model = Libmf::Model.new(loss: :one_class_l2)
+    error = assert_raises(ArgumentError) do
+      model.fit(train_set, eval_set: [[1000000, 1, 1]])
+    end
+    assert_equal "Eval set cannot have extra rows for one_class_l2 loss", error.message
+  end
+
+  def test_eval_set_extra_columns_one_class_l2
+    train_set = read_file("real_matrix.tr.txt")
+
+    model = Libmf::Model.new(loss: :one_class_l2)
+    error = assert_raises(ArgumentError) do
+      model.fit(train_set, eval_set: [[1, 1000000, 1]])
+    end
+    assert_equal "Eval set cannot have extra columns for one_class_l2 loss", error.message
   end
 
   def test_path
     model = Libmf::Model.new(quiet: true)
-    model.fit(file_path("real_matrix.tr.txt"))
-    assert_equal 2309, model.rows
-  end
-
-  def test_path_eval_set
-    model = Libmf::Model.new(quiet: true)
-    model.fit(file_path("real_matrix.tr.txt"), eval_set: file_path("real_matrix.te.txt"))
-    assert_equal 2309, model.rows
+    error = assert_raises(Libmf::Error) do
+      model.fit(file_path("real_matrix.tr.txt"))
+    end
+    assert_equal "Reading data directly from files is no longer supported", error.message
   end
 
   def test_cv
     data = read_file("real_matrix.tr.txt")
     model = Libmf::Model.new(quiet: true)
     assert model.cv(data)
+  end
+
+  def test_negative_row_index
+    model = Libmf::Model.new(quiet: true)
+    error = assert_raises(ArgumentError) do
+      model.fit([[-1, 0, 1]])
+    end
+    assert_equal "Invalid row index", error.message
+  end
+
+  def test_max_row_index
+    model = Libmf::Model.new(quiet: true)
+    error = assert_raises(ArgumentError) do
+      model.fit([[2**31 - 1, 0, 1]])
+    end
+    assert_equal "Invalid row index", error.message
+  end
+
+  def test_negative_column_index
+    model = Libmf::Model.new(quiet: true)
+    error = assert_raises(ArgumentError) do
+      model.fit([[0, -1, 1]])
+    end
+    assert_equal "Invalid column index", error.message
+  end
+
+  def test_max_column_index
+    model = Libmf::Model.new(quiet: true)
+    error = assert_raises(ArgumentError) do
+      model.fit([[0, 2**31 - 1, 1]])
+    end
+    assert_equal "Invalid column index", error.message
+  end
+
+  def test_loss_real_kl
+    data = read_file("real_matrix.tr.txt")
+
+    model = Libmf::Model.new(quiet: true, loss: :real_kl)
+    model.fit(data)
+  end
+
+  # TODO fix memory leak in shared library when copy_data is false
+  def test_loss_one_class_l2
+    data = read_file("real_matrix.tr.txt")
+
+    model = Libmf::Model.new(quiet: true, loss: :one_class_l2, copy_data: true)
+    model.fit(data)
+  end
+
+  def test_loss_unknown
+    data = read_file("real_matrix.tr.txt")
+
+    model = Libmf::Model.new(quiet: true, loss: :unknown)
+    error = assert_raises ArgumentError do
+      model.fit(data)
+    end
+    assert_equal "Unknown loss", error.message
   end
 
   def test_not_fit
@@ -76,7 +159,7 @@ class ModelTest < Minitest::Test
     assert_equal "Not fit", error.message
   end
 
-  def test_no_data
+  def test_fit_no_data
     model = Libmf::Model.new
     error = assert_raises Libmf::Error do
       model.fit([])
@@ -84,7 +167,52 @@ class ModelTest < Minitest::Test
     assert_equal "No data", error.message
   end
 
+  def test_cv_no_data
+    model = Libmf::Model.new
+    error = assert_raises Libmf::Error do
+      model.cv([])
+    end
+    assert_equal "No data", error.message
+  end
+
+  def test_save_missing
+    data = read_file("real_matrix.tr.txt")
+    model = Libmf::Model.new(quiet: true)
+    model.fit(data)
+    error = assert_raises Libmf::Error do
+      model.save("missing/model.txt")
+    end
+    assert_equal "Cannot save model", error.message
+  end
+
+  def test_load_missing
+    error = assert_raises Libmf::Error do
+      Libmf::Model.load("missing.txt")
+    end
+    assert_equal "Cannot open model", error.message
+  end
+
+  def test_fit_bad_param
+    data = read_file("real_matrix.tr.txt")
+    model = Libmf::Model.new(quiet: true, factors: 0)
+    error = assert_raises Libmf::Error do
+      model.fit(data)
+    end
+    assert_equal "fit failed", error.message
+  end
+
+  def test_cv_bad_param
+    data = read_file("real_matrix.tr.txt")
+    model = Libmf::Model.new(quiet: true, factors: 0)
+    error = assert_raises Libmf::Error do
+      model.cv(data)
+    end
+    assert_equal "cv failed", error.message
+  end
+
   def test_numo
+    skip if ["jruby", "truffleruby"].include?(RUBY_ENGINE)
+
     data = read_file("real_matrix.tr.txt")
 
     model = Libmf::Model.new(quiet: true)
@@ -100,18 +228,35 @@ class ModelTest < Minitest::Test
     assert_equal "Invalid format", error.message
   end
 
+  def test_matrix
+    data = Libmf::Matrix.new
+    read_file("real_matrix.tr.txt").each do |row|
+      data.push(*row)
+    end
+
+    model = Libmf::Model.new(quiet: true)
+    model.fit(data)
+
+    assert_equal 2309, model.rows
+    assert_equal 1368, model.columns
+  end
+
   private
 
   def file_path(filename)
     "vendor/demo/#{filename}"
   end
 
+  FILES = {}
+
   def read_file(filename)
-    data = []
-    File.foreach(file_path(filename)) do |line|
-      row = line.chomp.split(" ")
-      data << [row[0].to_i, row[1].to_i, row[2].to_f]
+    FILES[filename] ||= begin
+      data = []
+      File.foreach(file_path(filename)) do |line|
+        row = line.chomp.split(" ")
+        data << [row[0].to_i, row[1].to_i, row[2].to_f].freeze
+      end
+      data.freeze
     end
-    data
   end
 end

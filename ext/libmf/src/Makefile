@@ -26,17 +26,16 @@ else
 	SO_NAME = -soname
 endif
 
-noall:
-	ruby make.rb
-
-all:
-	true
-	
-install:
-	true
+all: mf-train mf-predict
 
 lib: mf.o
 	$(CXX) -shared -Wl,$(SO_NAME),libmf.$(LIB_EXT) -o libmf.$(LIB_EXT) mf.o
+
+mf-train: mf-train.cpp mf.o
+	$(CXX) $(CXXFLAGS) $(DFLAG) -o $@ $^
+
+mf-predict: mf-predict.cpp mf.o
+	$(CXX) $(CXXFLAGS) $(DFLAG) -o $@ $^
 
 mf.o: mf.cpp mf.h
 	$(CXX) $(CXXFLAGS) $(DFLAG) -c -fPIC -o $@ $<

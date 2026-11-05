@@ -10,10 +10,24 @@ module Libmf
       @model =
         if eval_set
           eval_set = create_problem(eval_set)
+          param = self.param
+
+          # LIBMF does not handle these cases
+          if param[:fun] == 12
+            if eval_set[:m] > train_set[:m]
+              raise ArgumentError, "Eval set cannot have extra rows for one_class_l2 loss"
+            end
+
+            if eval_set[:n] > train_set[:n]
+              raise ArgumentError, "Eval set cannot have extra columns for one_class_l2 loss"
+            end
+          end
+
           FFI.mf_train_with_validation(train_set, eval_set, param)
         else
-          FFI.mf_train(train_set, param)
+          FFI.mf_train(train_set, self.param)
         end
+      raise Error, "fit failed" if @model.null?
 
       nil
     end
@@ -24,15 +38,27 @@ module Libmf
 
     def cv(data, folds: 5)
       problem = create_problem(data)
-      FFI.mf_cross_validation(problem, folds, param)
+      # TODO update fork to differentiate between bad parameters and zero error
+      res = FFI.mf_cross_validation(problem, folds, param)
+      raise Error, "cv failed" if res == 0
+      res
     end
 
     def save_model(path)
-      FFI.mf_save_model(model, path)
+      status = FFI.mf_save_model(model, path)
+      raise Error, "Cannot save model" if status != 0
+    end
+    alias_method :save, :save_model
+
+    def self.load(path)
+      model = Model.new
+      model.load_model(path)
+      model
     end
 
     def load_model(path)
       @model = FFI.mf_load_model(path)
+      raise Error, "Cannot open model" if @model.null?
     end
 
     def rows
@@ -59,6 +85,34 @@ module Libmf
       _factors(model[:q], columns, format)
     end
 
+    def rmse(data)
+      FFI.calc_rmse(create_problem(data), model)
+    end
+
+    def mae(data)
+      FFI.calc_mae(create_problem(data), model)
+    end
+
+    def gkl(data)
+      FFI.calc_gkl(create_problem(data), model)
+    end
+
+    def logloss(data)
+      FFI.calc_logloss(create_problem(data), model)
+    end
+
+    def accuracy(data)
+      FFI.calc_accuracy(create_problem(data), model)
+    end
+
+    def mpr(data, transpose)
+      FFI.calc_mpr(create_problem(data), model, transpose)
+    end
+
+    def auc(data, transpose)
+      FFI.calc_auc(create_problem(data), model, transpose)
+    end
+
     private
 
     def _factors(ptr, n, format)
@@ -80,17 +134,33 @@ module Libmf
     def param
       param = FFI.mf_get_default_param
       options = @options.dup
+
+      if options[:loss].is_a?(Symbol)
+        loss_map = {
+          real_l2: 0,
+          real_l1: 1,
+          real_kl: 2,
+          binary_log: 5,
+          binary_l2: 6,
+          binary_l1: 7,
+          one_class_row: 10,
+          one_class_col: 11,
+          one_class_l2: 12
+        }
+        options[:loss] = loss_map[options[:loss]] || (raise ArgumentError, "Unknown loss")
+      end
+
       # silence insufficient blocks warning with default params
       options[:bins] ||= 25 unless options[:nr_bins]
       options[:copy_data] = false unless options.key?(:copy_data)
       options_map = {
-        :loss => :fun,
-        :factors => :k,
-        :threads => :nr_threads,
-        :bins => :nr_bins,
-        :iterations => :nr_iters,
-        :learning_rate => :eta,
-        :nmf => :do_nmf
+        loss: :fun,
+        factors: :k,
+        threads: :nr_threads,
+        bins: :nr_bins,
+        iterations: :nr_iters,
+        learning_rate: :eta,
+        nmf: :do_nmf
       }
       options.each do |k, v|
         k = options_map[k] if options_map[k]
@@ -103,8 +173,11 @@ module Libmf
 
     def create_problem(data)
       if data.is_a?(String)
-        # need to expand path so it's absolute
-        return FFI.mf_read_problem(File.expand_path(data))
+        raise Error, "Reading data directly from files is no longer supported"
+      end
+
+      if data.is_a?(Matrix)
+        data = data.data
       end
 
       raise Error, "No data" if data.empty?
@@ -114,7 +187,23 @@ module Libmf
       # and write directly to C string
       buffer = String.new
       pack_format = "iif"
+      int_max = 2**31 - 1
+      umax = -1
+      vmax = -1
       data.each do |row|
+        u = row[0]
+        if u < 0 || u >= int_max
+          raise ArgumentError, "Invalid row index"
+        end
+
+        v = row[1]
+        if v < 0 || v >= int_max
+          raise ArgumentError, "Invalid column index"
+        end
+
+        umax = u if u > umax
+        vmax = v if v > vmax
+
         row.pack(pack_format, buffer: buffer)
       end
 
@@ -125,12 +214,9 @@ module Libmf
       # FFI will throw an error above if too long
       raise Error, "Bad buffer size" if r.size != buffer.bytesize
 
-      m = data.max_by { |r| r[0] }[0] + 1
-      n = data.max_by { |r| r[1] }[1] + 1
-
       prob = FFI::Problem.new
-      prob[:m] = m
-      prob[:n] = n
+      prob[:m] = umax + 1
+      prob[:n] = vmax + 1
       prob[:nnz] = data.size
       prob[:r] = r
       prob

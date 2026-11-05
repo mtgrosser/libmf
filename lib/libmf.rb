@@ -2,8 +2,9 @@
 require "ffi"
 
 # modules
-require "libmf/model"
-require "libmf/version"
+require_relative "libmf/matrix"
+require_relative "libmf/model"
+require_relative "libmf/version"
 
 module Libmf
   class Error < StandardError; end
@@ -15,13 +16,13 @@ module Libmf
     if Gem.win_platform?
       "mf.dll"
     elsif RbConfig::CONFIG["host_os"] =~ /darwin/i
-      if RbConfig::CONFIG["host_cpu"] =~ /arm/i
+      if RbConfig::CONFIG["host_cpu"] =~ /arm|aarch64/i
         "libmf.arm64.dylib"
       else
         "libmf.dylib"
       end
     else
-      if RbConfig::CONFIG["host_cpu"] =~ /aarch64/i
+      if RbConfig::CONFIG["host_cpu"] =~ /arm|aarch64/i
         "libmf.arm64.so"
       else
         "libmf.so"

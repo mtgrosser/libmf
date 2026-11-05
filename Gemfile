@@ -3,6 +3,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "rake"
-gem "minitest", ">= 5"
-gem "benchmark-ips"
-gem "numo-narray"
+gem "minitest"
+gem "numo-narray-alt", platform: [:mri, :windows]
+gem "benchmark-ips", require: false
+gem "ruby_memcheck"

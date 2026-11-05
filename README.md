@@ -1,29 +1,28 @@
-# LIBMF
+# LIBMF Ruby
 
 [LIBMF](https://github.com/cjlin1/libmf) - large-scale sparse matrix factorization - for Ruby
 
 Check out [Disco](https://github.com/ankane/disco) for higher-level collaborative filtering
 
-[![Build Status](https://github.com/ankane/libmf/workflows/build/badge.svg?branch=master)](https://github.com/ankane/libmf/actions)
+[![Build Status](https://github.com/ankane/libmf-ruby/actions/workflows/build.yml/badge.svg)](https://github.com/ankane/libmf-ruby/actions)
 
 ## Installation
 
 Add this line to your application’s Gemfile:
 
 ```ruby
-gem 'libmf'
+gem "libmf"
 ```
 
 ## Getting Started
 
-Prep your data in the format `[row_index, column_index, value]`
+Prep your data in the format `row_index, column_index, value`
 
 ```ruby
-data = [
-  [0, 0, 5.0],
-  [0, 2, 3.5],
-  [1, 1, 4.0]
-]
+data = Libmf::Matrix.new
+data.push(0, 0, 5.0)
+data.push(0, 2, 3.5)
+data.push(1, 1, 4.0)
 ```
 
 Create a model
@@ -55,13 +54,13 @@ model.bias
 Save the model to a file
 
 ```ruby
-model.save_model("model.txt")
+model.save("model.txt")
 ```
 
 Load the model from a file
 
 ```ruby
-model.load_model("model.txt")
+model = Libmf::Model.load("model.txt")
 ```
 
 Pass a validation set
@@ -90,7 +89,7 @@ Pass parameters - default values below
 
 ```ruby
 Libmf::Model.new(
-  loss: 0,                # loss function
+  loss: :real_l2,         # loss function
   factors: 8,             # number of latent factors
   threads: 12,            # number of threads used
   bins: 25,               # number of bins
@@ -100,7 +99,7 @@ Libmf::Model.new(
   lambda_q1: 0,           # coefficient of L1-norm regularization on Q
   lambda_q2: 0.1,         # coefficient of L2-norm regularization on Q
   learning_rate: 0.1,     # learning rate
-  alpha: 0.1,             # importance of negative entries
+  alpha: 1,               # importance of negative entries
   c: 0.0001,              # desired value of negative entries
   nmf: false,             # perform non-negative MF (NMF)
   quiet: false            # no outputs to stdout
@@ -111,37 +110,85 @@ Libmf::Model.new(
 
 For real-valued matrix factorization
 
-- 0 - squared error (L2-norm)
-- 1 - absolute error (L1-norm)
-- 2 - generalized KL-divergence
+- `:real_l2` - squared error (L2-norm)
+- `:real_l1` - absolute error (L1-norm)
+- `:real_kl` - generalized KL-divergence
 
 For binary matrix factorization
 
-- 5 - logarithmic error
-- 6 - squared hinge loss
-- 7 - hinge loss
+- `:binary_log` - logarithmic error
+- `:binary_l2` - squared hinge loss
+- `:binary_l1` - hinge loss
 
 For one-class matrix factorization
 
-- 10 - row-oriented pair-wise logarithmic loss
-- 11 - column-oriented pair-wise logarithmic loss
-- 12 - squared error (L2-norm)
+- `:one_class_row` - row-oriented pair-wise logarithmic loss
+- `:one_class_col` - column-oriented pair-wise logarithmic loss
+- `:one_class_l2` - squared error (L2-norm)
 
-## Performance
+## Metrics
 
-For performance, read data directly from files
+Calculate RMSE (for real-valued MF)
 
 ```ruby
-model.fit("train.txt", eval_set: "validate.txt")
-model.cv("train.txt")
+model.rmse(data)
 ```
 
-Data should be in the format `row_index column_index value`:
+Calculate MAE (for real-valued MF)
 
-```txt
-0 0 5.0
-0 2 3.5
-1 1 4.0
+```ruby
+model.mae(data)
+```
+
+Calculate generalized KL-divergence (for non-negative real-valued MF)
+
+```ruby
+model.gkl(data)
+```
+
+Calculate logarithmic loss (for binary MF)
+
+```ruby
+model.logloss(data)
+```
+
+Calculate accuracy (for binary MF)
+
+```ruby
+model.accuracy(data)
+```
+
+Calculate MPR (for one-class MF)
+
+```ruby
+model.mpr(data, transpose)
+```
+
+Calculate AUC (for one-class MF)
+
+```ruby
+model.auc(data, transpose)
+```
+
+## Example
+
+Download the [MovieLens 100K dataset](https://grouplens.org/datasets/movielens/100k/) and use:
+
+```ruby
+require "csv"
+
+train_set = Libmf::Matrix.new
+valid_set = Libmf::Matrix.new
+
+CSV.foreach("u.data", col_sep: "\t").with_index do |row, i|
+  data = i < 80000 ? train_set : valid_set
+  data.push(row[0].to_i, row[1].to_i, row[2].to_f)
+end
+
+model = Libmf::Model.new(factors: 20)
+model.fit(train_set, eval_set: valid_set)
+
+puts model.rmse(valid_set)
 ```
 
 ## Numo
@@ -159,22 +206,22 @@ model.q_factors(format: :numo)
 
 ## History
 
-View the [changelog](https://github.com/ankane/libmf/blob/master/CHANGELOG.md)
+View the [changelog](https://github.com/ankane/libmf-ruby/blob/master/CHANGELOG.md)
 
 ## Contributing
 
 Everyone is encouraged to help improve this project. Here are a few ways you can help:
 
-- [Report bugs](https://github.com/ankane/libmf/issues)
-- Fix bugs and [submit pull requests](https://github.com/ankane/libmf/pulls)
+- [Report bugs](https://github.com/ankane/libmf-ruby/issues)
+- Fix bugs and [submit pull requests](https://github.com/ankane/libmf-ruby/pulls)
 - Write, clarify, or fix documentation
 - Suggest or add new features
 
 To get started with development:
 
 ```sh
-git clone --recursive https://github.com/ankane/libmf.git
-cd libmf
+git clone https://github.com/ankane/libmf-ruby.git
+cd libmf-ruby
 bundle install
 bundle exec rake vendor:all
 bundle exec rake test

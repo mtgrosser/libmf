@@ -53,13 +53,19 @@ module Libmf
     end
 
     attach_function :mf_get_default_param, [], Parameter.by_value
-    attach_function :mf_read_problem, [:string], Problem.by_value
     attach_function :mf_save_model, [Model.by_ref, :string], :int
     attach_function :mf_load_model, [:string], Model.auto_ptr
     attach_function :mf_destroy_model, [:pointer], :void
     attach_function :mf_train, [Problem.by_ref, Parameter.by_value], Model.auto_ptr
     attach_function :mf_train_with_validation, [Problem.by_ref, Problem.by_ref, Parameter.by_value], Model.auto_ptr
-    attach_function :mf_predict, [Model.by_ref, :int, :int], :float
     attach_function :mf_cross_validation, [Problem.by_ref, :int, Parameter.by_value], :double
+    attach_function :mf_predict, [Model.by_ref, :int, :int], :float
+    attach_function :calc_rmse, [Problem.by_ref, Model.by_ref], :double
+    attach_function :calc_mae, [Problem.by_ref, Model.by_ref], :double
+    attach_function :calc_gkl, [Problem.by_ref, Model.by_ref], :double
+    attach_function :calc_logloss, [Problem.by_ref, Model.by_ref], :double
+    attach_function :calc_accuracy, [Problem.by_ref, Model.by_ref], :double
+    attach_function :calc_mpr, [Problem.by_ref, Model.by_ref, :bool], :double
+    attach_function :calc_auc, [Problem.by_ref, Model.by_ref, :bool], :double
   end
 end

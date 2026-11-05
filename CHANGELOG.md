@@ -1,6 +1,34 @@
-## 0.2.5 (2021-10-06)
+## 0.5.0.1 (2026-11-05)
 
-- Compile libmf library locally
+- Compile libmf locally
+
+## 0.5.0 (2026-04-17)
+
+- Added checks for invalid data
+- Fixed memory leak in shared library
+- Dropped support for reading data directly from files
+- Dropped support for Ruby < 3.3
+
+## 0.4.0 (2024-10-22)
+
+- Dropped support for Ruby < 3.1
+
+## 0.3.0 (2022-08-07)
+
+- Added metrics
+- Prefer `save` over `save_model`
+- Prefer `load` over `load_model`
+- Dropped support for Ruby < 2.7
+
+## 0.2.6 (2021-12-02)
+
+- Improved ARM detection
+
+## 0.2.5 (2021-10-18)
+
+- Added named loss functions
+- Added `Matrix` class
+- Improved error checking for `fit`, `cv`, `save_model`, and `load_model`
 
 ## 0.2.4 (2021-08-05)
 
